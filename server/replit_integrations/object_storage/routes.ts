@@ -25,7 +25,13 @@ function getBaseUrl(req: Request) {
     return process.env.PUBLIC_BASE_URL;
   }
 
-  // In development or without PUBLIC_BASE_URL, use request headers
+  // Use Replit domain for proper external access
+  const replitDomain = process.env.REPLIT_DEV_DOMAIN || process.env.REPLIT_DOMAINS;
+  if (replitDomain) {
+    return `https://${replitDomain}`;
+  }
+
+  // Fallback to request headers
   const proto = (req.headers["x-forwarded-proto"] as string) || req.protocol || "https";
   const host =
     (req.headers["x-forwarded-host"] as string) ||
