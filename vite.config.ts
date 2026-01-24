@@ -7,11 +7,11 @@ export default defineConfig(({ mode }) => ({
 
   server: {
     host: "0.0.0.0",
-    port: 5173,
+    port: 5000,
     strictPort: true,
     allowedHosts: true,
 
-    // ✅ Frontend (5173) se /api requests backend (5011) par bhej do
+    // ✅ Frontend (5000) se /api requests backend (5011) par bhej do
     proxy: {
       "/api": {
         target: "http://localhost:5011",

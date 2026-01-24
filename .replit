@@ -40,11 +40,14 @@ localPort = 5000
 externalPort = 80
 
 [[ports]]
+localPort = 5011
+externalPort = 3000
+
+[[ports]]
 localPort = 5173
 externalPort = 5173
 
 [userenv]
 
 [userenv.shared]
-MONGODB_URI = "mongodb+srv://anilvasisht027_db_user:nXE2TJJmDEkfDrDX@cluster0.qg8ilnu.mongodb.net/mwss_db"
 JWT_SECRET = "mwss_jwt_secret_key_2024_secure"
