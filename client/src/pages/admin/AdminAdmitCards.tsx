@@ -9,6 +9,8 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { useToast } from "@/hooks/use-toast";
 import { IdCard, Plus, Search, Download, Loader2, Users, Upload, X } from "lucide-react";
+import jsPDF from "jspdf";
+import html2canvas from "html2canvas";
 
 interface Student {
   id: number;
@@ -197,131 +199,121 @@ export default function AdminAdmitCards() {
     loadData();
   };
 
-  const handleDownload = (ac: AdmitCard) => {
+  const handleDownload = async (ac: AdmitCard) => {
     const admitData = parseAdmitCardData(ac.fileUrl);
     const student = ac.studentId;
 
-    const admitCardHTML = `
-<!DOCTYPE html>
-<html>
-<head>
-  <meta charset="UTF-8">
-  <title>Admit Card - ${student.fullName}</title>
-  <style>
-    body { font-family: Arial, sans-serif; padding: 20px; max-width: 800px; margin: 0 auto; }
-    .header { text-align: center; border-bottom: 2px solid #c00; padding-bottom: 15px; margin-bottom: 20px; }
-    .logo { width: 80px; height: 80px; }
-    .title { color: #c00; font-size: 24px; font-weight: bold; margin: 10px 0; }
-    .subtitle { color: #666; font-size: 14px; }
-    .admit-title { background: #c00; color: white; padding: 10px; text-align: center; font-size: 18px; font-weight: bold; margin: 20px 0; }
-    .details { display: flex; gap: 30px; margin: 20px 0; }
-    .details-left { flex: 1; }
-    .details-right { width: 120px; height: 150px; border: 1px solid #ccc; display: flex; align-items: center; justify-content: center; color: #999; }
-    .row { display: flex; margin: 10px 0; }
-    .label { font-weight: bold; width: 150px; }
-    .value { flex: 1; }
-    .exam-info { background: #f5f5f5; padding: 15px; margin: 20px 0; }
-    .exam-info h3 { margin: 0 0 10px 0; color: #333; }
-    .instructions { margin-top: 20px; padding: 15px; border: 1px solid #ddd; }
-    .instructions h3 { margin: 0 0 10px 0; }
-    .instructions ul { margin: 0; padding-left: 20px; }
-    .footer { text-align: center; margin-top: 30px; padding-top: 20px; border-top: 1px solid #ddd; }
-    .signature { margin-top: 40px; text-align: right; }
-    @media print { body { padding: 0; } }
-  </style>
-</head>
-<body>
-  <div class="header">
-    <div class="title">MANAV WELFARE SEWA SOCIETY, BHUNA</div>
-    <div class="subtitle">मानव वेलफेयर सेवा सोसायटी, भुना (हरियाणा)</div>
-    <div class="subtitle">Reg. No: HR/01/2024/01215 | DARPAN ID: HR/2025/0866027</div>
-    <div class="subtitle">Laxmi Mata Mandir Wali Gali, Uklana Road, Shastri Mandi, Bhuna, Fatehabad - 125111</div>
-    <div class="subtitle">Phone: +91 98126 76818</div>
-  </div>
-  
-  <div class="admit-title">ADMIT CARD / प्रवेश पत्र</div>
-  
-  <div class="details">
-    <div class="details-left">
-      <div class="row"><span class="label">Roll Number:</span><span class="value">${student.rollNumber || 'N/A'}</span></div>
-      <div class="row"><span class="label">Registration No:</span><span class="value">${student.registrationNumber}</span></div>
-      <div class="row"><span class="label">Student Name:</span><span class="value">${student.fullName}</span></div>
-      <div class="row"><span class="label">Father's Name:</span><span class="value">${student.fatherName || 'N/A'}</span></div>
-      <div class="row"><span class="label">Class:</span><span class="value">${student.class}</span></div>
-    </div>
-    <div class="details-right">${ac.studentPhotoUrl ? `<img src="${ac.studentPhotoUrl}" style="width: 100%; height: 100%; object-fit: cover;" alt="Student Photo" />` : 'Photo'}</div>
-  </div>
-  
-  <div class="exam-info">
-    <h3>Exam Details / परीक्षा विवरण</h3>
-    <div class="row"><span class="label">Exam Name:</span><span class="value">${admitData?.examName || ac.examName}</span></div>
-    <div class="row"><span class="label">Exam Date:</span><span class="value">${admitData?.examDate || 'To be announced'}</span></div>
-    <div class="row"><span class="label">Exam Time:</span><span class="value">${admitData?.examTime || 'To be announced'}</span></div>
-    <div class="row"><span class="label">Exam Center:</span><span class="value">${admitData?.examCenter || 'To be announced'}</span></div>
-  </div>
-  
-  <div class="instructions">
-    <h3>Terms & Conditions / नियम एवं शर्तें:</h3>
-    <table style="width:100%; border-collapse: collapse; font-size: 12px;">
-      <tr>
-        <td style="width:50%; vertical-align:top; padding-right:10px;">
-          <strong>English:</strong>
-          <ol style="margin:5px 0; padding-left:20px;">
-            <li>Bring this admit card to the examination center.</li>
-            <li>Carry a valid photo ID (Aadhar Card/School ID) for verification.</li>
-            <li>Arrive at least 30 minutes before the scheduled exam time.</li>
-            <li>Mobile phones and electronic devices are strictly prohibited.</li>
-            <li>Any malpractice will lead to immediate disqualification.</li>
-            <li>Students must follow all instructions given by the invigilator.</li>
-            <li>Late entry after 15 minutes of exam start will not be allowed.</li>
-            <li>This admit card is non-transferable.</li>
-            <li>The organization reserves the right to cancel the exam if necessary.</li>
-            <li>Results will be declared as per the schedule announced by MWSS.</li>
-          </ol>
-        </td>
-        <td style="width:50%; vertical-align:top; padding-left:10px; border-left: 1px solid #ddd;">
-          <strong>हिंदी:</strong>
-          <ol style="margin:5px 0; padding-left:20px;">
-            <li>इस प्रवेश पत्र को परीक्षा केंद्र पर अवश्य लाएं।</li>
-            <li>पहचान हेतु वैध फोटो आईडी (आधार कार्ड/स्कूल आईडी) साथ लाएं।</li>
-            <li>निर्धारित परीक्षा समय से कम से कम 30 मिनट पहले पहुंचें।</li>
-            <li>मोबाइल फोन और इलेक्ट्रॉनिक उपकरण सख्त वर्जित हैं।</li>
-            <li>किसी भी प्रकार की नकल करने पर तुरंत अयोग्य घोषित किया जाएगा।</li>
-            <li>छात्रों को निरीक्षक द्वारा दिए गए सभी निर्देशों का पालन करना होगा।</li>
-            <li>परीक्षा शुरू होने के 15 मिनट बाद प्रवेश की अनुमति नहीं होगी।</li>
-            <li>यह प्रवेश पत्र हस्तांतरणीय नहीं है।</li>
-            <li>संस्था को आवश्यकता पड़ने पर परीक्षा रद्द करने का अधिकार है।</li>
-            <li>परिणाम MWSS द्वारा घोषित कार्यक्रम के अनुसार जारी किए जाएंगे।</li>
-          </ol>
-        </td>
-      </tr>
-    </table>
-  </div>
-  
-  <div class="signature">
-    <p>_____________________</p>
-    <p>Authorized Signature</p>
-    <p>अधिकृत हस्ताक्षर</p>
-  </div>
-  
-  <div class="footer">
-    <p>This is a computer generated admit card / यह कंप्यूटर जनित प्रवेश पत्र है</p>
-    <p style="margin-top:5px; font-size:11px;">MANAV WELFARE SEWA SOCIETY, BHUNA | Reg: HR/01/2024/01215 | DARPAN: HR/2025/0866027</p>
-  </div>
-</body>
-</html>`;
+    toast({ title: "Generating PDF...", description: "Please wait while your admit card is being prepared." });
 
-    const blob = new Blob([admitCardHTML], { type: 'text/html' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `admit_card_${student.rollNumber || student.registrationNumber}.html`;
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    URL.revokeObjectURL(url);
-    
-    toast({ title: "Downloaded", description: "Admit card downloaded. Open in browser and print." });
+    const container = document.createElement('div');
+    container.style.position = 'absolute';
+    container.style.left = '-9999px';
+    container.style.top = '0';
+    container.style.width = '794px';
+    container.style.backgroundColor = 'white';
+    container.style.padding = '30px';
+    container.style.fontFamily = 'Arial, sans-serif';
+
+    container.innerHTML = `
+      <div style="text-align: center; border-bottom: 2px solid #c00; padding-bottom: 15px; margin-bottom: 20px;">
+        <div style="color: #c00; font-size: 22px; font-weight: bold; margin: 10px 0;">MANAV WELFARE SEWA SOCIETY, BHUNA</div>
+        <div style="color: #666; font-size: 13px;">मानव वेलफेयर सेवा सोसायटी, भुना (हरियाणा)</div>
+        <div style="color: #666; font-size: 12px;">Reg. No: HR/01/2024/01215 | DARPAN ID: HR/2025/0866027</div>
+        <div style="color: #666; font-size: 12px;">Laxmi Mata Mandir Wali Gali, Uklana Road, Shastri Mandi, Bhuna, Fatehabad - 125111</div>
+        <div style="color: #666; font-size: 12px;">Phone: +91 98126 76818</div>
+      </div>
+      
+      <div style="background: #c00; color: white; padding: 10px; text-align: center; font-size: 18px; font-weight: bold; margin: 20px 0;">
+        ADMIT CARD / प्रवेश पत्र
+      </div>
+      
+      <div style="display: flex; gap: 30px; margin: 20px 0;">
+        <div style="flex: 1;">
+          <div style="display: flex; margin: 8px 0;"><span style="font-weight: bold; width: 150px;">Roll Number:</span><span>${student.rollNumber || 'N/A'}</span></div>
+          <div style="display: flex; margin: 8px 0;"><span style="font-weight: bold; width: 150px;">Registration No:</span><span>${student.registrationNumber}</span></div>
+          <div style="display: flex; margin: 8px 0;"><span style="font-weight: bold; width: 150px;">Student Name:</span><span>${student.fullName}</span></div>
+          <div style="display: flex; margin: 8px 0;"><span style="font-weight: bold; width: 150px;">Father's Name:</span><span>${student.fatherName || 'N/A'}</span></div>
+          <div style="display: flex; margin: 8px 0;"><span style="font-weight: bold; width: 150px;">Class:</span><span>${student.class}</span></div>
+        </div>
+        <div style="width: 100px; height: 120px; border: 1px solid #ccc; display: flex; align-items: center; justify-content: center; color: #999; font-size: 12px;">
+          ${ac.studentPhotoUrl ? `<img src="${ac.studentPhotoUrl}" style="width: 100%; height: 100%; object-fit: cover;" crossorigin="anonymous" />` : 'Photo'}
+        </div>
+      </div>
+      
+      <div style="background: #f5f5f5; padding: 15px; margin: 20px 0;">
+        <div style="font-weight: bold; margin-bottom: 10px; font-size: 14px;">Exam Details / परीक्षा विवरण</div>
+        <div style="display: flex; margin: 6px 0;"><span style="font-weight: bold; width: 150px;">Exam Name:</span><span>${admitData?.examName || ac.examName}</span></div>
+        <div style="display: flex; margin: 6px 0;"><span style="font-weight: bold; width: 150px;">Exam Date:</span><span>${admitData?.examDate || 'To be announced'}</span></div>
+        <div style="display: flex; margin: 6px 0;"><span style="font-weight: bold; width: 150px;">Exam Time:</span><span>${admitData?.examTime || 'To be announced'}</span></div>
+        <div style="display: flex; margin: 6px 0;"><span style="font-weight: bold; width: 150px;">Exam Center:</span><span>${admitData?.examCenter || 'To be announced'}</span></div>
+      </div>
+      
+      <div style="margin-top: 15px; padding: 12px; border: 1px solid #ddd;">
+        <div style="font-weight: bold; margin-bottom: 8px; font-size: 13px;">Terms & Conditions / नियम एवं शर्तें:</div>
+        <div style="display: flex; font-size: 10px; line-height: 1.4;">
+          <div style="flex: 1; padding-right: 10px;">
+            <div style="font-weight: bold; margin-bottom: 4px;">English:</div>
+            <div>1. Bring this admit card to the examination center.</div>
+            <div>2. Carry a valid photo ID for verification.</div>
+            <div>3. Arrive at least 30 minutes before exam time.</div>
+            <div>4. Mobile phones are strictly prohibited.</div>
+            <div>5. Malpractice leads to disqualification.</div>
+          </div>
+          <div style="flex: 1; padding-left: 10px; border-left: 1px solid #ddd;">
+            <div style="font-weight: bold; margin-bottom: 4px;">हिंदी:</div>
+            <div>1. इस प्रवेश पत्र को परीक्षा केंद्र पर लाएं।</div>
+            <div>2. पहचान हेतु वैध फोटो आईडी साथ लाएं।</div>
+            <div>3. परीक्षा से 30 मिनट पहले पहुंचें।</div>
+            <div>4. मोबाइल फोन सख्त वर्जित है।</div>
+            <div>5. नकल पर अयोग्य घोषित किया जाएगा।</div>
+          </div>
+        </div>
+      </div>
+      
+      <div style="margin-top: 30px; text-align: right;">
+        <div>_____________________</div>
+        <div style="font-size: 12px;">Authorized Signature</div>
+        <div style="font-size: 11px;">अधिकृत हस्ताक्षर</div>
+      </div>
+      
+      <div style="text-align: center; margin-top: 20px; padding-top: 15px; border-top: 1px solid #ddd; font-size: 10px; color: #666;">
+        <div>This is a computer generated admit card / यह कंप्यूटर जनित प्रवेश पत्र है</div>
+        <div style="margin-top: 3px;">MANAV WELFARE SEWA SOCIETY, BHUNA | Reg: HR/01/2024/01215 | DARPAN: HR/2025/0866027</div>
+      </div>
+    `;
+
+    document.body.appendChild(container);
+
+    try {
+      const canvas = await html2canvas(container, {
+        scale: 2,
+        useCORS: true,
+        allowTaint: true,
+        backgroundColor: '#ffffff'
+      });
+
+      const imgData = canvas.toDataURL('image/png');
+      const pdf = new jsPDF({
+        orientation: 'portrait',
+        unit: 'mm',
+        format: 'a4'
+      });
+
+      const pdfWidth = pdf.internal.pageSize.getWidth();
+      const pdfHeight = pdf.internal.pageSize.getHeight();
+      const imgWidth = pdfWidth - 20;
+      const imgHeight = (canvas.height * imgWidth) / canvas.width;
+
+      pdf.addImage(imgData, 'PNG', 10, 10, imgWidth, Math.min(imgHeight, pdfHeight - 20));
+      pdf.save(`admit_card_${student.rollNumber || student.registrationNumber}.pdf`);
+
+      toast({ title: "PDF Downloaded", description: "Admit card has been saved as PDF." });
+    } catch (error) {
+      console.error('PDF generation error:', error);
+      toast({ title: "Error", description: "Failed to generate PDF. Please try again.", variant: "destructive" });
+    } finally {
+      document.body.removeChild(container);
+    }
   };
 
   const parseAdmitCardData = (url: string) => {
