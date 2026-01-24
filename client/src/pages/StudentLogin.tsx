@@ -11,11 +11,11 @@ import { GraduationCap, Eye, EyeOff } from "lucide-react";
 import logo from "@/assets/logo.jpeg";
 
 export default function StudentLogin() {
-  const [email, setEmail] = useState("");
+  const [registrationNumber, setRegistrationNumber] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
-  const { login, isStudent, isLoading: authLoading } = useAuth();
+  const { loginWithRegistration, isStudent, isLoading: authLoading } = useAuth();
   const navigate = useNavigate();
   const { toast } = useToast();
 
@@ -29,7 +29,7 @@ export default function StudentLogin() {
     e.preventDefault();
     setIsLoading(true);
 
-    const result = await login(email, password, "student");
+    const result = await loginWithRegistration(registrationNumber, password);
     
     if (result.success) {
       toast({
@@ -39,7 +39,7 @@ export default function StudentLogin() {
     } else {
       toast({
         title: "लॉगिन विफल",
-        description: result.error || "गलत Email या Password",
+        description: result.error || "गलत Registration Number या Password",
         variant: "destructive",
       });
     }
@@ -66,14 +66,15 @@ export default function StudentLogin() {
           <CardContent>
             <form onSubmit={handleSubmit} className="space-y-4">
               <div className="space-y-2">
-                <Label htmlFor="email">Email / ईमेल</Label>
+                <Label htmlFor="registrationNumber">Registration Number / पंजीकरण संख्या</Label>
                 <Input
-                  id="email"
-                  type="email"
-                  placeholder="your.email@example.com"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
+                  id="registrationNumber"
+                  type="text"
+                  placeholder="MWSS-2025-0001"
+                  value={registrationNumber}
+                  onChange={(e) => setRegistrationNumber(e.target.value)}
                   required
+                  data-testid="input-registration-number"
                 />
               </div>
               <div className="space-y-2">

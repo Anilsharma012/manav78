@@ -8,7 +8,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { useToast } from "@/hooks/use-toast";
-import { IdCard, Plus, Search, Download, Loader2, Users, Upload, X } from "lucide-react";
+import { IdCard, Plus, Search, Download, Loader2, Users, Upload, X, Printer } from "lucide-react";
 import jsPDF from "jspdf";
 import html2canvas from "html2canvas";
 
@@ -314,6 +314,117 @@ export default function AdminAdmitCards() {
     } finally {
       document.body.removeChild(container);
     }
+  };
+
+  const handlePrint = (ac: AdmitCard) => {
+    const admitData = parseAdmitCardData(ac.fileUrl);
+    const student = ac.studentId;
+
+    const printWindow = window.open('', '_blank');
+    if (!printWindow) {
+      toast({ title: "Error", description: "Please allow popups to print admit card.", variant: "destructive" });
+      return;
+    }
+
+    printWindow.document.write(`
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>Admit Card - ${student.fullName}</title>
+  <style>
+    body { font-family: Arial, sans-serif; padding: 20px; max-width: 800px; margin: 0 auto; }
+    .header { text-align: center; border-bottom: 2px solid #c00; padding-bottom: 15px; margin-bottom: 20px; }
+    .title { color: #c00; font-size: 22px; font-weight: bold; margin: 10px 0; }
+    .subtitle { color: #666; font-size: 13px; }
+    .admit-title { background: #c00; color: white; padding: 10px; text-align: center; font-size: 18px; font-weight: bold; margin: 20px 0; }
+    .details { display: flex; gap: 30px; margin: 20px 0; }
+    .details-left { flex: 1; }
+    .details-right { width: 100px; height: 120px; border: 1px solid #ccc; display: flex; align-items: center; justify-content: center; color: #999; }
+    .row { display: flex; margin: 8px 0; }
+    .label { font-weight: bold; width: 150px; }
+    .value { flex: 1; }
+    .exam-info { background: #f5f5f5; padding: 15px; margin: 20px 0; }
+    .exam-info h3 { margin: 0 0 10px 0; color: #333; font-size: 14px; }
+    .instructions { margin-top: 15px; padding: 12px; border: 1px solid #ddd; }
+    .instructions h3 { margin: 0 0 8px 0; font-size: 13px; }
+    .instructions-grid { display: flex; font-size: 10px; line-height: 1.4; }
+    .instructions-col { flex: 1; }
+    .instructions-col:last-child { padding-left: 10px; border-left: 1px solid #ddd; }
+    .footer { text-align: center; margin-top: 20px; padding-top: 15px; border-top: 1px solid #ddd; font-size: 10px; color: #666; }
+    .signature { margin-top: 30px; text-align: right; }
+    @media print { body { padding: 10px; } @page { margin: 1cm; } }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <div class="title">MANAV WELFARE SEWA SOCIETY, BHUNA</div>
+    <div class="subtitle">मानव वेलफेयर सेवा सोसायटी, भुना (हरियाणा)</div>
+    <div class="subtitle">Reg. No: HR/01/2024/01215 | DARPAN ID: HR/2025/0866027</div>
+    <div class="subtitle">Laxmi Mata Mandir Wali Gali, Uklana Road, Shastri Mandi, Bhuna, Fatehabad - 125111</div>
+    <div class="subtitle">Phone: +91 98126 76818</div>
+  </div>
+  
+  <div class="admit-title">ADMIT CARD / प्रवेश पत्र</div>
+  
+  <div class="details">
+    <div class="details-left">
+      <div class="row"><span class="label">Roll Number:</span><span class="value">${student.rollNumber || 'N/A'}</span></div>
+      <div class="row"><span class="label">Registration No:</span><span class="value">${student.registrationNumber}</span></div>
+      <div class="row"><span class="label">Student Name:</span><span class="value">${student.fullName}</span></div>
+      <div class="row"><span class="label">Father's Name:</span><span class="value">${student.fatherName || 'N/A'}</span></div>
+      <div class="row"><span class="label">Class:</span><span class="value">${student.class}</span></div>
+    </div>
+    <div class="details-right">${ac.studentPhotoUrl ? `<img src="${ac.studentPhotoUrl}" style="width: 100%; height: 100%; object-fit: cover;" alt="Photo" />` : 'Photo'}</div>
+  </div>
+  
+  <div class="exam-info">
+    <h3>Exam Details / परीक्षा विवरण</h3>
+    <div class="row"><span class="label">Exam Name:</span><span class="value">${admitData?.examName || ac.examName}</span></div>
+    <div class="row"><span class="label">Exam Date:</span><span class="value">${admitData?.examDate || 'To be announced'}</span></div>
+    <div class="row"><span class="label">Exam Time:</span><span class="value">${admitData?.examTime || 'To be announced'}</span></div>
+    <div class="row"><span class="label">Exam Center:</span><span class="value">${admitData?.examCenter || 'To be announced'}</span></div>
+  </div>
+  
+  <div class="instructions">
+    <h3>Terms & Conditions / नियम एवं शर्तें:</h3>
+    <div class="instructions-grid">
+      <div class="instructions-col">
+        <strong>English:</strong>
+        <div>1. Bring this admit card to the examination center.</div>
+        <div>2. Carry a valid photo ID for verification.</div>
+        <div>3. Arrive at least 30 minutes before exam time.</div>
+        <div>4. Mobile phones are strictly prohibited.</div>
+        <div>5. Malpractice leads to disqualification.</div>
+      </div>
+      <div class="instructions-col">
+        <strong>हिंदी:</strong>
+        <div>1. इस प्रवेश पत्र को परीक्षा केंद्र पर लाएं।</div>
+        <div>2. पहचान हेतु वैध फोटो आईडी साथ लाएं।</div>
+        <div>3. परीक्षा से 30 मिनट पहले पहुंचें।</div>
+        <div>4. मोबाइल फोन सख्त वर्जित है।</div>
+        <div>5. नकल पर अयोग्य घोषित किया जाएगा।</div>
+      </div>
+    </div>
+  </div>
+  
+  <div class="signature">
+    <p>_____________________</p>
+    <p style="font-size: 12px;">Authorized Signature / अधिकृत हस्ताक्षर</p>
+  </div>
+  
+  <div class="footer">
+    <p>This is a computer generated admit card / यह कंप्यूटर जनित प्रवेश पत्र है</p>
+    <p>MANAV WELFARE SEWA SOCIETY, BHUNA | Reg: HR/01/2024/01215 | DARPAN: HR/2025/0866027</p>
+  </div>
+</body>
+</html>
+    `);
+    
+    printWindow.document.close();
+    printWindow.onload = () => {
+      printWindow.print();
+    };
   };
 
   const parseAdmitCardData = (url: string) => {
@@ -691,10 +802,16 @@ export default function AdminAdmitCards() {
                           <TableCell>{admitData?.examDate || "TBD"}</TableCell>
                           <TableCell>{admitData?.examCenter || "TBD"}</TableCell>
                           <TableCell>
-                            <Button variant="ghost" size="sm" onClick={() => handleDownload(ac)} data-testid={`button-download-${ac.id}`}>
-                              <Download className="h-4 w-4 mr-1" />
-                              Download
-                            </Button>
+                            <div className="flex gap-1">
+                              <Button variant="ghost" size="sm" onClick={() => handleDownload(ac)} data-testid={`button-download-${ac.id}`}>
+                                <Download className="h-4 w-4 mr-1" />
+                                Download
+                              </Button>
+                              <Button variant="ghost" size="sm" onClick={() => handlePrint(ac)} data-testid={`button-print-${ac.id}`}>
+                                <Printer className="h-4 w-4 mr-1" />
+                                Print
+                              </Button>
+                            </div>
                           </TableCell>
                         </TableRow>
                       );

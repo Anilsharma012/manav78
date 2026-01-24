@@ -49,6 +49,7 @@ export interface IStorage {
   getStudentByEmail(email: string): Promise<Student | undefined>;
   getStudentById(id: string): Promise<Student | undefined>;
   getStudentByRollNumber(rollNumber: string): Promise<Student | undefined>;
+  getStudentByRegistrationNumber(registrationNumber: string): Promise<Student | undefined>;
   getAllStudents(): Promise<Student[]>;
   updateStudent(id: string, data: Partial<InsertStudent>): Promise<Student | undefined>;
   countStudentsWithRegPrefix(prefix: string): Promise<number>;
@@ -217,6 +218,11 @@ export class DatabaseStorage implements IStorage {
     return student ? toPlain<Student>(student) : undefined;
   }
 
+  async getStudentByRegistrationNumber(registrationNumber: string): Promise<Student | undefined> {
+    const student = await StudentModel.findOne({ registrationNumber });
+    return student ? toPlain<Student>(student) : undefined;
+  }
+
   async getAllStudents(): Promise<Student[]> {
     const students = await StudentModel.find().sort({ createdAt: -1 });
     return toPlainArray<Student>(students);
@@ -269,6 +275,13 @@ export class DatabaseStorage implements IStorage {
   }
 
   async createAdmitCard(data: InsertAdmitCard): Promise<AdmitCardType> {
+    // Check if admit card already exists for this student (one student = one admit card only)
+    const existing = await AdmitCardModel.findOne({ studentId: data.studentId });
+    if (existing) {
+      // Update existing admit card with new data instead of creating duplicate
+      const updated = await AdmitCardModel.findByIdAndUpdate(existing._id, data, { new: true });
+      return toPlain<AdmitCardType>(updated || existing);
+    }
     const admitCard = await AdmitCardModel.create(data);
     return toPlain<AdmitCardType>(admitCard);
   }

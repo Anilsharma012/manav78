@@ -62,8 +62,14 @@ export async function registerRoutes(app: Express): Promise<void> {
 
   app.post("/api/auth/student/login", async (req, res) => {
     try {
-      const { email, password } = req.body;
-      const student = await storage.getStudentByEmail(email);
+      const { password, registrationNumber } = req.body;
+      
+      // Login by registration number only (multiple students can have same email)
+      if (!registrationNumber) {
+        return res.status(400).json({ error: "Registration number is required" });
+      }
+      
+      const student = await storage.getStudentByRegistrationNumber(registrationNumber);
       
       if (!student) {
         return res.status(401).json({ error: "Invalid credentials" });
@@ -80,7 +86,7 @@ export async function registerRoutes(app: Express): Promise<void> {
       
       // Check if student has approved payment (either feePaid flag or approved transaction)
       if (!student.feePaid) {
-        const transactions = await storage.getPaymentTransactionsByEmail(email);
+        const transactions = await storage.getPaymentTransactionsByEmail(student.email);
         const hasApprovedPayment = transactions.some(t => t.status === "approved" && (t.type === "fee" || t.type === "membership"));
         
         if (!hasApprovedPayment) {
@@ -109,11 +115,8 @@ export async function registerRoutes(app: Express): Promise<void> {
         return res.status(400).json({ error: "Missing required fields: email, password, fullName, class" });
       }
 
-      const existing = await storage.getStudentByEmail(email);
-      if (existing) {
-        responseSent = true;
-        return res.status(400).json({ error: "Email already registered" });
-      }
+      // Multiple accounts with same email are now allowed
+      // Each student gets a unique registration number for login
 
       const year = new Date().getFullYear();
       const count = await storage.countStudentsWithRegPrefix(`MWSS${year}`);

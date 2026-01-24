@@ -12,6 +12,7 @@ interface AuthContextType {
   token: string | null;
   isLoading: boolean;
   login: (email: string, password: string, type?: "admin" | "student" | "member") => Promise<{ success: boolean; error?: string }>;
+  loginWithRegistration: (registrationNumber: string, password: string) => Promise<{ success: boolean; error?: string }>;
   signup: (data: StudentRegistrationData | MemberRegistrationData) => Promise<{ success: boolean; error?: string; registrationNumber?: string }>;
   logout: () => void;
   isAdmin: boolean;
@@ -116,6 +117,50 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email, password }),
+      });
+
+      let data;
+      try {
+        const text = await res.text();
+        if (!text) {
+          setIsLoading(false);
+          return { success: false, error: "Server returned empty response" };
+        }
+        data = JSON.parse(text);
+      } catch (parseError) {
+        console.error("Failed to parse login response:", parseError);
+        setIsLoading(false);
+        return { success: false, error: "Invalid response from server" };
+      }
+
+      if (!res.ok) {
+        setIsLoading(false);
+        return { success: false, error: data.error || "Login failed" };
+      }
+
+      localStorage.setItem("auth_token", data.token);
+      setToken(data.token);
+      setUser({
+        id: data.user.id,
+        email: data.user.email,
+        role: data.user.role,
+        name: data.user.name,
+      });
+      setIsLoading(false);
+      return { success: true };
+    } catch (error: any) {
+      setIsLoading(false);
+      return { success: false, error: error?.message || "Network error" };
+    }
+  };
+
+  const loginWithRegistration = async (registrationNumber: string, password: string): Promise<{ success: boolean; error?: string }> => {
+    setIsLoading(true);
+    try {
+      const res = await fetch("/api/auth/student/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ registrationNumber, password }),
       });
 
       let data;
@@ -281,6 +326,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         token,
         isLoading,
         login,
+        loginWithRegistration,
         signup,
         logout,
         forgotPassword,
