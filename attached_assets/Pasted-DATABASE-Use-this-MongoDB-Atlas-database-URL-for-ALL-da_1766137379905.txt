@@ -1,0 +1,79 @@
+DATABASE:
+Use this MongoDB Atlas database URL for ALL data (admin, users, backend):
+mongodb+srv://anilvasisht027_db_user:nXE2TJJmDEkfDrDX@cluster0.qg8ilnu.mongodb.net/
+
+TECH STACK:
+- Backend: Node.js + Express.js
+- Database: MongoDB (Mongoose)
+- Auth: Custom JWT based authentication
+- Frontend: React.js (Admin & User dashboards)
+- Real-time updates using MongoDB (change streams or API polling)
+
+GENERAL REQUIREMENTS:
+- Single MongoDB database for admin, users, registrations, results, admit cards
+- Full CRUD control through Admin panel
+- Secure admin and user role separation
+- Admin has full control over all data
+
+ADMIN AUTH:
+- Admin login system
+- Protected admin routes
+- Admin dashboard accessible only after login
+
+ADMIN DASHBOARD SIDEBAR FEATURES:
+1. Dashboard
+   - Total registered students count
+   - Today’s registrations
+2. Student Registration Management
+   - View all students
+   - Search and filter students
+   - Edit / update student data
+3. Manual Student Registration
+   - Admin can register students from backend
+4. Roll Number Management
+   - Assign roll number to students
+   - Update roll numbers
+5. Admit Card Management
+   - Upload admit cards (PDF/Image)
+   - Map admit card to student
+6. Result Management
+   - Upload student results
+   - Publish / unpublish results
+7. User Access Control
+   - Activate / deactivate student accounts
+
+USER FEATURES:
+- Student registration form
+- Login system
+- Student dashboard after login
+- View roll number
+- Download admit card
+- View result published by admin
+
+DATABASE STRUCTURE:
+- Admin collection
+- Users (Students) collection
+- Results collection
+- Admit Cards collection
+
+BACKEND:
+- REST APIs for admin and user
+- MongoDB models using Mongoose
+- JWT middleware for auth
+- Role-based access control
+
+FRONTEND:
+- Clean admin dashboard UI with sidebar
+- Separate user dashboard
+- Responsive design
+
+SECURITY:
+- Password hashing
+- JWT token protection
+- Admin-only APIs protected
+
+OUTPUT EXPECTATION:
+- Full working project structure
+- Backend + frontend code
+- MongoDB connected using provided database URL
+- Clear comments in code

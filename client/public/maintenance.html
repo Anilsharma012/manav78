@@ -1,0 +1,287 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Website Under Maintenance</title>
+
+  <!-- SEO / Caching -->
+  <meta name="robots" content="noindex,nofollow,noarchive" />
+  <meta http-equiv="Cache-Control" content="no-store, no-cache, must-revalidate, max-age=0" />
+  <meta http-equiv="Pragma" content="no-cache" />
+  <meta http-equiv="Expires" content="0" />
+
+  <style>
+    :root{
+      --bg1:#0b1220;
+      --bg2:#0f1b33;
+      --card:rgba(255,255,255,.06);
+      --border:rgba(255,255,255,.12);
+      --text:#e8eefc;
+      --muted:rgba(232,238,252,.72);
+      --brand: #22c55e;
+      --brand2:#60a5fa;
+      --shadow: 0 20px 70px rgba(0,0,0,.45);
+    }
+    *{box-sizing:border-box}
+    body{
+      margin:0;
+      font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial, "Noto Sans", "Helvetica Neue", sans-serif;
+      color:var(--text);
+      min-height:100vh;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      padding:22px;
+      background:
+        radial-gradient(1200px 600px at 20% 10%, rgba(96,165,250,.18), transparent 60%),
+        radial-gradient(900px 500px at 85% 25%, rgba(34,197,94,.16), transparent 55%),
+        linear-gradient(135deg, var(--bg1), var(--bg2));
+    }
+    .wrap{
+      width:100%;
+      max-width:860px;
+    }
+    .card{
+      background:var(--card);
+      border:1px solid var(--border);
+      border-radius:20px;
+      box-shadow:var(--shadow);
+      overflow:hidden;
+    }
+    .topbar{
+      padding:18px 22px;
+      display:flex;
+      align-items:center;
+      gap:12px;
+      border-bottom:1px solid var(--border);
+      background:rgba(255,255,255,.03);
+    }
+    .logo{
+      width:44px;height:44px;border-radius:14px;
+      display:grid;place-items:center;
+      background:linear-gradient(135deg, rgba(34,197,94,.25), rgba(96,165,250,.22));
+      border:1px solid rgba(255,255,255,.14);
+      flex:0 0 auto;
+    }
+    .logo svg{opacity:.95}
+    .brand{
+      display:flex;
+      flex-direction:column;
+      line-height:1.15;
+    }
+    .brand strong{font-size:14px; letter-spacing:.2px}
+    .brand span{font-size:12px;color:var(--muted)}
+    .content{
+      padding:26px 22px 22px;
+      display:grid;
+      grid-template-columns: 1.2fr .8fr;
+      gap:18px;
+    }
+    @media (max-width: 760px){
+      .content{grid-template-columns:1fr}
+    }
+    h1{
+      margin:0 0 10px;
+      font-size:30px;
+      letter-spacing:-.4px;
+    }
+    p{
+      margin:8px 0;
+      color:var(--muted);
+      line-height:1.7;
+      font-size:14.5px;
+    }
+    .pillrow{
+      display:flex; flex-wrap:wrap;
+      gap:10px;
+      margin-top:14px;
+    }
+    .pill{
+      border:1px solid rgba(255,255,255,.14);
+      background:rgba(255,255,255,.04);
+      padding:10px 12px;
+      border-radius:999px;
+      font-size:12.5px;
+      color:rgba(232,238,252,.86);
+      display:flex;
+      align-items:center;
+      gap:8px;
+      white-space:nowrap;
+    }
+    .pill i{
+      width:8px; height:8px; border-radius:50%;
+      display:inline-block;
+      background:var(--brand);
+      box-shadow:0 0 0 4px rgba(34,197,94,.14);
+    }
+    .status{
+      border:1px solid rgba(255,255,255,.14);
+      background:rgba(255,255,255,.04);
+      border-radius:18px;
+      padding:16px;
+      min-height:160px;
+    }
+    .status h2{
+      margin:0 0 10px;
+      font-size:14px;
+      letter-spacing:.2px;
+      color:rgba(232,238,252,.9);
+    }
+    .bar{
+      height:10px;
+      border-radius:999px;
+      background:rgba(255,255,255,.08);
+      border:1px solid rgba(255,255,255,.12);
+      overflow:hidden;
+      position:relative;
+    }
+    .bar > span{
+      position:absolute; left:-40%;
+      top:0; bottom:0;
+      width:40%;
+      background:linear-gradient(90deg, transparent, rgba(96,165,250,.75), rgba(34,197,94,.75), transparent);
+      animation:move 1.4s linear infinite;
+    }
+    @keyframes move{
+      from{transform:translateX(0)}
+      to{transform:translateX(240%)}
+    }
+    .meta{
+      margin-top:12px;
+      font-size:12.5px;
+      color:rgba(232,238,252,.7);
+    }
+    .cta{
+      margin-top:14px;
+      display:flex;
+      gap:10px;
+      flex-wrap:wrap;
+    }
+    .btn{
+      display:inline-flex;
+      align-items:center;
+      gap:8px;
+      padding:10px 12px;
+      border-radius:12px;
+      border:1px solid rgba(255,255,255,.14);
+      background:rgba(255,255,255,.05);
+      color:rgba(232,238,252,.9);
+      text-decoration:none;
+      font-size:13px;
+      cursor:pointer;
+      user-select:none;
+    }
+    .btn:hover{background:rgba(255,255,255,.08)}
+    .btn.primary{
+      border-color: rgba(34,197,94,.35);
+      background: rgba(34,197,94,.12);
+    }
+    .footer{
+      padding:16px 22px;
+      border-top:1px solid var(--border);
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:10px;
+      flex-wrap:wrap;
+      color:rgba(232,238,252,.55);
+      font-size:12px;
+      background:rgba(255,255,255,.02);
+    }
+    .dot{
+      width:6px;height:6px;border-radius:50%;
+      background:rgba(255,255,255,.35);
+      display:inline-block;
+      margin:0 8px;
+      transform:translateY(-1px);
+    }
+    .time{
+      font-variant-numeric: tabular-nums;
+      color:rgba(232,238,252,.75);
+    }
+  </style>
+</head>
+
+<body>
+  <div class="wrap">
+    <div class="card">
+      <div class="topbar">
+        <div class="logo" aria-hidden="true">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
+            <path d="M12 2l9 4.5v6c0 5-3.8 9.5-9 9.5S3 17.5 3 12.5v-6L12 2z" stroke="rgba(232,238,252,.92)" stroke-width="1.6"/>
+            <path d="M8.2 12.2l2.4 2.4 5.2-5.2" stroke="rgba(34,197,94,.95)" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+        </div>
+        <div class="brand">
+          <strong>Manav Welfare Seva Society</strong>
+          <span>Temporary downtime for updates</span>
+        </div>
+      </div>
+
+      <div class="content">
+        <div>
+          <h1>Website Under Maintenance</h1>
+          <p>
+            Bhai kuch important updates / improvements chal rahe hain. Website thodi der ke liye
+            maintenance mode me hai. Jaldi hi wapas live ho jayegi.
+          </p>
+          <p>
+            Aap thodi der baad refresh karke check kar lena. Thanks for your patience 🙏
+          </p>
+
+          <div class="pillrow">
+            <div class="pill"><i></i> Updates in progress</div>
+            <div class="pill"><i style="background:var(--brand2);box-shadow:0 0 0 4px rgba(96,165,250,.14)"></i> Service will resume soon</div>
+            <div class="pill"><i style="background:#f59e0b;box-shadow:0 0 0 4px rgba(245,158,11,.14)"></i> Please try again later</div>
+          </div>
+
+          <div class="cta">
+            <a class="btn primary" href="javascript:location.reload()">🔄 Refresh</a>
+            <a class="btn" href="/" onclick="return false;">🏠 Home (temporarily unavailable)</a>
+          </div>
+
+          <p class="meta">
+            Note: If you are the admin, disable maintenance by removing the <b>maintenance.on</b> file.
+          </p>
+        </div>
+
+        <div class="status">
+          <h2>Status</h2>
+          <div class="bar" aria-hidden="true"><span></span></div>
+          <div class="meta">
+            <div>We’re applying updates & optimizing performance.</div>
+            <div style="margin-top:10px;">
+              Last checked: <span class="time" id="t">—</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="footer">
+        <div>
+          <span class="time" id="year">2026</span>
+          <span class="dot"></span>
+          <span>manavwelfaresevasociety.com</span>
+        </div>
+        <div>
+          Support: <span style="color:rgba(232,238,252,.8)">Please contact admin</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    function pad(n){ return String(n).padStart(2,'0'); }
+    function nowStr(){
+      const d = new Date();
+      return `${pad(d.getDate())}-${pad(d.getMonth()+1)}-${d.getFullYear()} ${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}`;
+    }
+    document.getElementById('t').textContent = nowStr();
+    document.getElementById('year').textContent = new Date().getFullYear();
+    setInterval(() => {
+      document.getElementById('t').textContent = nowStr();
+    }, 1000);
+  </script>
+</body>
+</html>

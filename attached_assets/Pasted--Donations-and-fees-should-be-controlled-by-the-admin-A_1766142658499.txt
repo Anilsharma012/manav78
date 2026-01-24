@@ -1,0 +1,23 @@
+- Donations and fees should be controlled by the admin.
+- Admins should be able to upload QR codes for payments, whether for donations or other transactions.
+- If a member joins and needs to make a payment, the QR code, UPI ID, or bank transaction details should be uploaded by the admin.
+- The admin should also manage the backend aspects, including updates to the frontend sections such as "About Us," "Services," "Gallery," "Events," "Join Us," and "Contact."
+- Any updates to these sections should be controlled by the admin.
+- The details for the "Become a Volunteer" section should also be managed by the admin.
+- The admin should be able to manage and update the details of volunteer applications.
+- For student admission cards, a structure should be defined, and the admin should be able to generate them based on this structure, possibly including name, number, details, and credentials.
+- Admins should be able to upload student admission cards with names and numbers.
+- Regarding fees, the system should support individual fee structures and handle payment records.
+- When managing member accounts, admins should be able to add new members, and membership creation should be linked to payments.
+- Once a membership payment is made and approved by the admin, the member should be able to download their membership card, which should also appear on their dashboard.
+- Membership cards should be downloadable from the admin's dashboard and visible to the member.
+- The system should track payment status, and membership cards should only be available for downloaded after payment.
+- When creating or managing pages through the backend, the option to create specific pages should be available.
+- Multiple pages should be manageable by the admin.
+- Admins should be able to create roll numbers, either individually or in bulk.
+- For results, a system for adding results should be in place.
+- This includes fields for the total number of marks and rank.
+- Bulk uploading of results should be supported.
+- Admission cards should be generated with specific details like examination center and student information.
+- Admins should be able to add and manage fee structures for different members.
+- The system should allow for fetching and downloading fee records.

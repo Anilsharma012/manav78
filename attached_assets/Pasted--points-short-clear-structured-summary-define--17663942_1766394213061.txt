@@ -1,0 +1,69 @@
+नीचे आपके सारे points को **short, clear और structured summary** में define कर रहा हूँ 👇
+
+---
+
+## 🔧 Key Issues & Required Updates (Short Summary)
+
+### 💳 Payment & UPI Module
+
+* Donation page पर **URL create करके QR दिखाने की dependency हटानी है**
+* Admin को **direct QR image upload option** देना है
+* Upload के बाद **UPI QR directly display होना चाहिए**
+* Admin payment link click करने पर **payment gateways fail हो रहे हैं – integration fix करना है**
+* सभी payment gateways **properly load और work करें**
+
+---
+
+### 👨‍🎓 Student Registration & Admin Panel
+
+* Backend से student add करने पर **auto-registration issue fix करना है**
+* Admin dashboard → Student section में **student email ID properly show होनी चाहिए**
+* Student login/registration की **email ID सभी details के साथ display हो**
+
+---
+
+### 📋 Student Dashboard Features
+
+* Admin द्वारा student create + membership payment के बाद:
+
+  * 🎫 **Membership Card dashboard पर show हो**
+  * 📝 **Admit Card option** → roll number डालकर view/download
+* Approval के बाद student dashboard में **sidebar visible हो**, जिसमें:
+
+  * Admit Card
+  * Roll Number
+  * Membership
+  * Logout
+
+---
+
+### 🔔 Notifications System
+
+* Student registration पर **email notification**
+* Admin द्वारा roll number assign करने पर **email alert**
+* Admit card / roll number related notifications **admin से send हों**
+
+---
+
+### 🧑‍💼 Admin Controls & CMS
+
+* Existing frontend pages को **update करने का option हो (new page create के बजाय)**
+* All pages **editable & updatable** हों admin panel से
+
+---
+
+### ⚙️ System Integration & Testing
+
+* **Admin, User, Database – तीनों properly integrated हों**
+* Payment records, student records **accurately maintain हों**
+* **All buttons, links, UPI ID, QR code, payment flow fully tested और working हों**
+
+---
+
+अगर चाहें तो मैं इसे:
+
+* ✅ **Developer Task List**
+* ✅ **Bug Fix Report**
+* ✅ **Project Update Document / PDF**
+
+में भी convert कर सकता हूँ। बस बताइए 👍
