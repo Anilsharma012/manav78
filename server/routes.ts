@@ -402,9 +402,11 @@ export async function registerRoutes(app: Express): Promise<void> {
 
   app.post("/api/admit-cards", authMiddleware, adminOnly, async (req: AuthRequest, res) => {
     try {
+      console.log("[ADMIT CARD] Creating admit card with data:", JSON.stringify(req.body));
       const admitCard = await storage.createAdmitCard(req.body);
+      console.log("[ADMIT CARD] Created successfully:", admitCard?.id);
       
-      // Send email notification to student
+      // Send email notification to student (non-blocking)
       if (req.body.studentId) {
         const student = await storage.getStudentById(req.body.studentId);
         if (student?.email) {
@@ -418,7 +420,8 @@ export async function registerRoutes(app: Express): Promise<void> {
       }
       
       res.status(201).json(admitCard);
-    } catch (error) {
+    } catch (error: any) {
+      console.error("[ADMIT CARD] Error creating admit card:", error?.message || error);
       res.status(500).json({ error: "Failed to create admit card" });
     }
   });
