@@ -23,6 +23,16 @@ function toPlain<T>(doc: any): T {
   obj.id = obj._id?.toString() || obj.id;
   delete obj._id;
   delete obj.__v;
+  
+  // Handle nested populated documents
+  for (const key in obj) {
+    if (obj[key] && typeof obj[key] === 'object' && obj[key]._id) {
+      obj[key].id = obj[key]._id?.toString() || obj[key].id;
+      delete obj[key]._id;
+      delete obj[key].__v;
+    }
+  }
+  
   return obj as T;
 }
 
@@ -264,12 +274,12 @@ export class DatabaseStorage implements IStorage {
   }
 
   async getAdmitCardsByStudentId(studentId: string): Promise<AdmitCardType[]> {
-    const admitCards = await AdmitCardModel.find({ studentId }).sort({ uploadedAt: -1 });
+    const admitCards = await AdmitCardModel.find({ studentId }).populate('studentId').sort({ uploadedAt: -1 });
     return toPlainArray<AdmitCardType>(admitCards);
   }
 
   async getAllAdmitCards(): Promise<AdmitCardType[]> {
-    const admitCards = await AdmitCardModel.find().sort({ uploadedAt: -1 });
+    const admitCards = await AdmitCardModel.find().populate('studentId').sort({ uploadedAt: -1 });
     return toPlainArray<AdmitCardType>(admitCards);
   }
 
