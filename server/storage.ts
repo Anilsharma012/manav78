@@ -66,6 +66,11 @@ export interface IStorage {
   getAdmitCardsByStudentId(studentId: string): Promise<AdmitCardType[]>;
   getAllAdmitCards(): Promise<AdmitCardType[]>;
   deleteAdmitCard(id: string): Promise<void>;
+  bulkDeleteAdmitCards(ids: string[]): Promise<void>;
+
+  bulkDeleteStudents(ids: string[]): Promise<void>;
+  bulkDeleteVolunteerAccounts(ids: string[]): Promise<void>;
+  bulkDeletePaymentTransactions(ids: string[]): Promise<void>;
 
   createMembership(data: InsertMembership): Promise<Membership>;
   getMembershipByUserId(userId: string): Promise<Membership | undefined>;
@@ -99,6 +104,8 @@ export interface IStorage {
   createVolunteerApplication(data: InsertVolunteerApplication): Promise<VolunteerApplication>;
   getAllVolunteerApplications(): Promise<VolunteerApplication[]>;
   updateVolunteerApplication(id: string, data: Partial<InsertVolunteerApplication>): Promise<VolunteerApplication | undefined>;
+  deleteVolunteerApplication(id: string): Promise<void>;
+  bulkDeleteVolunteerApplications(ids: string[]): Promise<void>;
 
   createFeeStructure(data: InsertFeeStructure): Promise<FeeStructure>;
   getAllFeeStructures(): Promise<FeeStructure[]>;
@@ -300,6 +307,22 @@ export class DatabaseStorage implements IStorage {
     await AdmitCardModel.findByIdAndDelete(id);
   }
 
+  async bulkDeleteAdmitCards(ids: string[]): Promise<void> {
+    await AdmitCardModel.deleteMany({ _id: { $in: ids } });
+  }
+
+  async bulkDeleteStudents(ids: string[]): Promise<void> {
+    await StudentModel.deleteMany({ _id: { $in: ids } });
+  }
+
+  async bulkDeleteVolunteerAccounts(ids: string[]): Promise<void> {
+    await VolunteerAccountModel.deleteMany({ _id: { $in: ids } });
+  }
+
+  async bulkDeletePaymentTransactions(ids: string[]): Promise<void> {
+    await PaymentTransactionModel.deleteMany({ _id: { $in: ids } });
+  }
+
   async createMembership(data: InsertMembership): Promise<Membership> {
     const membership = await MembershipModel.create(data);
     return toPlain<Membership>(membership);
@@ -434,6 +457,14 @@ export class DatabaseStorage implements IStorage {
   async updateVolunteerApplication(id: string, data: Partial<InsertVolunteerApplication>): Promise<VolunteerApplication | undefined> {
     const app = await VolunteerApplicationModel.findByIdAndUpdate(id, { ...data, updatedAt: new Date() }, { new: true });
     return app ? toPlain<VolunteerApplication>(app) : undefined;
+  }
+
+  async deleteVolunteerApplication(id: string): Promise<void> {
+    await VolunteerApplicationModel.findByIdAndDelete(id);
+  }
+
+  async bulkDeleteVolunteerApplications(ids: string[]): Promise<void> {
+    await VolunteerApplicationModel.deleteMany({ _id: { $in: ids } });
   }
 
   async createFeeStructure(data: InsertFeeStructure): Promise<FeeStructure> {

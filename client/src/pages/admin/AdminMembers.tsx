@@ -12,7 +12,7 @@ import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue
 } from "@/components/ui/select";
 import {
-  Users, Search, CheckCircle, XCircle, Clock, Filter, Eye, Loader2, IdCard
+  Users, Search, CheckCircle, XCircle, Clock, Filter, Eye, Loader2, IdCard, Trash2
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { queryClient, apiRequest } from "@/lib/queryClient";
@@ -20,6 +20,7 @@ import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter
 } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
+import { Checkbox } from "@/components/ui/checkbox";
 
 interface Member {
   _id: string;
@@ -63,6 +64,8 @@ export default function AdminMembers() {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [isVerifyDialogOpen, setIsVerifyDialogOpen] = useState(false);
   const [memberToVerify, setMemberToVerify] = useState<Member | null>(null);
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [isDeleting, setIsDeleting] = useState(false);
 
   const { data: members = [], isLoading } = useQuery<Member[]>({
     queryKey: ["/api/admin/members"],
@@ -110,6 +113,57 @@ export default function AdminMembers() {
     const matchesFilter = filterVerified === "all" || (filterVerified === "verified" ? m.isVerified : !m.isVerified);
     return matchesSearch && matchesFilter;
   });
+
+  const toggleSelect = (id: string) => {
+    const newSelected = new Set(selectedIds);
+    if (newSelected.has(id)) {
+      newSelected.delete(id);
+    } else {
+      newSelected.add(id);
+    }
+    setSelectedIds(newSelected);
+  };
+
+  const toggleSelectAll = () => {
+    if (selectedIds.size === filteredMembers.length) {
+      setSelectedIds(new Set());
+    } else {
+      setSelectedIds(new Set(filteredMembers.map(m => m._id)));
+    }
+  };
+
+  const handleBulkDelete = async () => {
+    if (selectedIds.size === 0) return;
+    
+    if (!confirm(`Are you sure you want to delete ${selectedIds.size} member(s)? This action cannot be undone.`)) {
+      return;
+    }
+
+    setIsDeleting(true);
+    try {
+      const token = localStorage.getItem("auth_token");
+      const res = await fetch("/api/admin/members/bulk-delete", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ ids: Array.from(selectedIds) }),
+      });
+
+      if (res.ok) {
+        toast({ title: "Success", description: `${selectedIds.size} member(s) deleted successfully` });
+        setSelectedIds(new Set());
+        queryClient.invalidateQueries({ queryKey: ["/api/admin/members"] });
+      } else {
+        throw new Error("Failed to delete members");
+      }
+    } catch (error) {
+      toast({ title: "Error", description: "Failed to delete members", variant: "destructive" });
+    } finally {
+      setIsDeleting(false);
+    }
+  };
 
   const getStatusBadge = (isVerified: boolean) => {
     if (isVerified) {
@@ -170,6 +224,12 @@ export default function AdminMembers() {
             </h1>
             <p className="text-muted-foreground">Manage registered members and verify accounts</p>
           </div>
+          {selectedIds.size > 0 && (
+            <Button variant="destructive" onClick={handleBulkDelete} disabled={isDeleting} data-testid="button-bulk-delete">
+              {isDeleting ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Trash2 className="h-4 w-4 mr-2" />}
+              Delete ({selectedIds.size})
+            </Button>
+          )}
         </div>
 
         <Card>
@@ -209,6 +269,13 @@ export default function AdminMembers() {
                 <Table>
                   <TableHeader>
                     <TableRow>
+                      <TableHead className="w-12">
+                        <Checkbox 
+                          checked={filteredMembers.length > 0 && selectedIds.size === filteredMembers.length}
+                          onCheckedChange={toggleSelectAll}
+                          data-testid="checkbox-select-all"
+                        />
+                      </TableHead>
                       <TableHead>Member Name</TableHead>
                       <TableHead>Email</TableHead>
                       <TableHead>Phone</TableHead>
@@ -221,13 +288,20 @@ export default function AdminMembers() {
                   <TableBody>
                     {filteredMembers.length === 0 ? (
                       <TableRow>
-                        <TableCell colSpan={7} className="text-center py-4 text-muted-foreground">
+                        <TableCell colSpan={8} className="text-center py-4 text-muted-foreground">
                           No members found
                         </TableCell>
                       </TableRow>
                     ) : (
                       filteredMembers.map((member) => (
                         <TableRow key={member._id || member.id}>
+                          <TableCell>
+                            <Checkbox 
+                              checked={selectedIds.has(member._id)}
+                              onCheckedChange={() => toggleSelect(member._id)}
+                              data-testid={`checkbox-member-${member._id}`}
+                            />
+                          </TableCell>
                           <TableCell className="font-medium">{member.fullName}</TableCell>
                           <TableCell className="text-sm">{member.email}</TableCell>
                           <TableCell className="text-sm">{member.phone}</TableCell>

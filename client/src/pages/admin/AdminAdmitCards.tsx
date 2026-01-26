@@ -8,7 +8,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { useToast } from "@/hooks/use-toast";
-import { IdCard, Plus, Search, Download, Loader2, Users, Upload, X, Printer } from "lucide-react";
+import { IdCard, Plus, Search, Download, Loader2, Users, Upload, X, Printer, Trash2 } from "lucide-react";
+import { Checkbox } from "@/components/ui/checkbox";
 import jsPDF from "jspdf";
 import html2canvas from "html2canvas";
 
@@ -49,6 +50,8 @@ export default function AdminAdmitCards() {
   const [loading, setLoading] = useState(true);
   const [generating, setGenerating] = useState(false);
   const [uploading, setUploading] = useState(false);
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [isDeleting, setIsDeleting] = useState(false);
   const admitCardRef = useRef<HTMLDivElement>(null);
   const { toast } = useToast();
 
@@ -456,6 +459,57 @@ export default function AdminAdmitCards() {
     return matchesSearch && matchesClass;
   });
 
+  const toggleSelect = (id: string) => {
+    const newSelected = new Set(selectedIds);
+    if (newSelected.has(id)) {
+      newSelected.delete(id);
+    } else {
+      newSelected.add(id);
+    }
+    setSelectedIds(newSelected);
+  };
+
+  const toggleSelectAll = () => {
+    if (selectedIds.size === filteredAdmitCards.length) {
+      setSelectedIds(new Set());
+    } else {
+      setSelectedIds(new Set(filteredAdmitCards.map(ac => String(ac.id))));
+    }
+  };
+
+  const handleBulkDelete = async () => {
+    if (selectedIds.size === 0) return;
+    
+    if (!confirm(`Are you sure you want to delete ${selectedIds.size} admit card(s)? This action cannot be undone.`)) {
+      return;
+    }
+
+    setIsDeleting(true);
+    try {
+      const token = localStorage.getItem("auth_token");
+      const res = await fetch("/api/admit-cards/bulk-delete", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ ids: Array.from(selectedIds) }),
+      });
+
+      if (res.ok) {
+        toast({ title: "Success", description: `${selectedIds.size} admit card(s) deleted successfully` });
+        setSelectedIds(new Set());
+        loadData();
+      } else {
+        throw new Error("Failed to delete admit cards");
+      }
+    } catch (error) {
+      toast({ title: "Error", description: "Failed to delete admit cards", variant: "destructive" });
+    } finally {
+      setIsDeleting(false);
+    }
+  };
+
   const studentsWithoutAdmitCard = () => {
     const existingStudentIds = new Set(admitCards.map(ac => ac.studentId?.id));
     return filteredEligibleStudents.filter(s => !existingStudentIds.has(s.id)).length;
@@ -483,6 +537,12 @@ export default function AdminAdmitCards() {
             <p className="text-muted-foreground">एडमिट कार्ड प्रबंधन - Total: {admitCards.length}</p>
           </div>
           <div className="flex gap-2 flex-wrap">
+            {selectedIds.size > 0 && (
+              <Button variant="destructive" onClick={handleBulkDelete} disabled={isDeleting} data-testid="button-bulk-delete">
+                {isDeleting ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Trash2 className="h-4 w-4 mr-2" />}
+                Delete ({selectedIds.size})
+              </Button>
+            )}
             <Dialog open={isBulkDialogOpen} onOpenChange={setIsBulkDialogOpen}>
               <DialogTrigger asChild>
                 <Button variant="outline" data-testid="button-bulk-generate">
@@ -772,6 +832,13 @@ export default function AdminAdmitCards() {
               <Table>
                 <TableHeader>
                   <TableRow>
+                    <TableHead className="w-12">
+                      <Checkbox 
+                        checked={filteredAdmitCards.length > 0 && selectedIds.size === filteredAdmitCards.length}
+                        onCheckedChange={toggleSelectAll}
+                        data-testid="checkbox-select-all"
+                      />
+                    </TableHead>
                     <TableHead>Roll No.</TableHead>
                     <TableHead>Student Name</TableHead>
                     <TableHead>Father's Name</TableHead>
@@ -785,7 +852,7 @@ export default function AdminAdmitCards() {
                 <TableBody>
                   {filteredAdmitCards.length === 0 ? (
                     <TableRow>
-                      <TableCell colSpan={8} className="text-center py-8 text-muted-foreground">
+                      <TableCell colSpan={9} className="text-center py-8 text-muted-foreground">
                         No admit cards found
                       </TableCell>
                     </TableRow>
@@ -794,6 +861,13 @@ export default function AdminAdmitCards() {
                       const admitData = parseAdmitCardData(ac.fileUrl);
                       return (
                         <TableRow key={ac.id} data-testid={`row-admit-card-${ac.id}`}>
+                          <TableCell>
+                            <Checkbox 
+                              checked={selectedIds.has(String(ac.id))}
+                              onCheckedChange={() => toggleSelect(String(ac.id))}
+                              data-testid={`checkbox-admit-card-${ac.id}`}
+                            />
+                          </TableCell>
                           <TableCell className="font-medium">{ac.studentId?.rollNumber}</TableCell>
                           <TableCell>{ac.studentId?.fullName}</TableCell>
                           <TableCell>{ac.studentId?.fatherName || "-"}</TableCell>

@@ -7,8 +7,9 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Checkbox } from "@/components/ui/checkbox";
 import { useToast } from "@/hooks/use-toast";
-import { GraduationCap, Plus, Search, Edit, Loader2 } from "lucide-react";
+import { GraduationCap, Plus, Search, Edit, Loader2, Trash2 } from "lucide-react";
 
 const feeLevels = [
   { id: "village", name: "Village Level", amount: 99 },
@@ -38,6 +39,8 @@ export default function AdminStudents() {
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   const [editingStudent, setEditingStudent] = useState<Student | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [isDeleting, setIsDeleting] = useState(false);
   const { toast } = useToast();
 
   const [formData, setFormData] = useState({
@@ -197,6 +200,57 @@ export default function AdminStudents() {
     return matchesSearch && matchesClass;
   });
 
+  const toggleSelect = (id: string) => {
+    const newSelected = new Set(selectedIds);
+    if (newSelected.has(id)) {
+      newSelected.delete(id);
+    } else {
+      newSelected.add(id);
+    }
+    setSelectedIds(newSelected);
+  };
+
+  const toggleSelectAll = () => {
+    if (selectedIds.size === filteredStudents.length) {
+      setSelectedIds(new Set());
+    } else {
+      setSelectedIds(new Set(filteredStudents.map(s => String(s.id))));
+    }
+  };
+
+  const handleBulkDelete = async () => {
+    if (selectedIds.size === 0) return;
+    
+    if (!confirm(`Are you sure you want to delete ${selectedIds.size} student(s)? This action cannot be undone.`)) {
+      return;
+    }
+
+    setIsDeleting(true);
+    try {
+      const token = localStorage.getItem("auth_token");
+      const res = await fetch("/api/students/bulk-delete", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ ids: Array.from(selectedIds) }),
+      });
+
+      if (res.ok) {
+        toast({ title: "Success", description: `${selectedIds.size} student(s) deleted successfully` });
+        setSelectedIds(new Set());
+        loadStudents();
+      } else {
+        throw new Error("Failed to delete students");
+      }
+    } catch (error) {
+      toast({ title: "Error", description: "Failed to delete students", variant: "destructive" });
+    } finally {
+      setIsDeleting(false);
+    }
+  };
+
   return (
     <AdminLayout>
       <div className="space-y-6">
@@ -208,13 +262,20 @@ export default function AdminStudents() {
             </h1>
             <p className="text-muted-foreground">छात्र प्रबंधन - Total: {students.length}</p>
           </div>
-          <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
-            <DialogTrigger asChild>
-              <Button onClick={() => { resetForm(); setEditingStudent(null); }} data-testid="button-add-student">
-                <Plus className="h-4 w-4 mr-2" />
-                Add Student
+          <div className="flex gap-2">
+            {selectedIds.size > 0 && (
+              <Button variant="destructive" onClick={handleBulkDelete} disabled={isDeleting} data-testid="button-bulk-delete">
+                {isDeleting ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Trash2 className="h-4 w-4 mr-2" />}
+                Delete ({selectedIds.size})
               </Button>
-            </DialogTrigger>
+            )}
+            <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
+              <DialogTrigger asChild>
+                <Button onClick={() => { resetForm(); setEditingStudent(null); }} data-testid="button-add-student">
+                  <Plus className="h-4 w-4 mr-2" />
+                  Add Student
+                </Button>
+              </DialogTrigger>
             <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
               <DialogHeader>
                 <DialogTitle>{editingStudent ? "Edit Student" : "Add New Student"}</DialogTitle>
@@ -291,7 +352,8 @@ export default function AdminStudents() {
                 </Button>
               </div>
             </DialogContent>
-          </Dialog>
+            </Dialog>
+          </div>
         </div>
 
         <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-3">
@@ -350,6 +412,13 @@ export default function AdminStudents() {
                 <Table>
                   <TableHeader>
                     <TableRow>
+                      <TableHead className="w-12">
+                        <Checkbox 
+                          checked={filteredStudents.length > 0 && selectedIds.size === filteredStudents.length}
+                          onCheckedChange={toggleSelectAll}
+                          data-testid="checkbox-select-all"
+                        />
+                      </TableHead>
                       <TableHead>Registration No.</TableHead>
                       <TableHead>Name / नाम</TableHead>
                       <TableHead>Email</TableHead>
@@ -364,13 +433,20 @@ export default function AdminStudents() {
                   <TableBody>
                     {filteredStudents.length === 0 ? (
                       <TableRow>
-                        <TableCell colSpan={9} className="text-center py-8 text-muted-foreground">
+                        <TableCell colSpan={10} className="text-center py-8 text-muted-foreground">
                           No students found
                         </TableCell>
                       </TableRow>
                     ) : (
                       filteredStudents.map((student) => (
                         <TableRow key={student.id} data-testid={`row-student-${student.id}`}>
+                          <TableCell>
+                            <Checkbox 
+                              checked={selectedIds.has(String(student.id))}
+                              onCheckedChange={() => toggleSelect(String(student.id))}
+                              data-testid={`checkbox-student-${student.id}`}
+                            />
+                          </TableCell>
                           <TableCell className="font-medium">{student.registrationNumber}</TableCell>
                           <TableCell>{student.fullName}</TableCell>
                           <TableCell className="text-sm">{student.email || "-"}</TableCell>

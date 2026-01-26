@@ -11,6 +11,7 @@ import { useToast } from "@/hooks/use-toast";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
 import { Loader2, Eye, Check, X, Trash2, User, UserCheck } from "lucide-react";
+import { Checkbox } from "@/components/ui/checkbox";
 
 interface VolunteerApplication {
   id: number;
@@ -54,6 +55,9 @@ export default function AdminVolunteers() {
   const [viewDialogOpen, setViewDialogOpen] = useState(false);
   const [accountDialogOpen, setAccountDialogOpen] = useState(false);
   const [adminNotes, setAdminNotes] = useState("");
+  const [selectedAppIds, setSelectedAppIds] = useState<Set<string>>(new Set());
+  const [selectedAccIds, setSelectedAccIds] = useState<Set<string>>(new Set());
+  const [isDeleting, setIsDeleting] = useState(false);
 
   const { data: applications = [], isLoading: loadingApplications } = useQuery<VolunteerApplication[]>({
     queryKey: ["/api/admin/volunteers"],
@@ -123,6 +127,106 @@ export default function AdminVolunteers() {
     },
   });
 
+  const toggleSelectApp = (id: string) => {
+    const newSelected = new Set(selectedAppIds);
+    if (newSelected.has(id)) {
+      newSelected.delete(id);
+    } else {
+      newSelected.add(id);
+    }
+    setSelectedAppIds(newSelected);
+  };
+
+  const toggleSelectAllApps = () => {
+    if (selectedAppIds.size === applications.length) {
+      setSelectedAppIds(new Set());
+    } else {
+      setSelectedAppIds(new Set(applications.map(a => String(a.id))));
+    }
+  };
+
+  const toggleSelectAcc = (id: string) => {
+    const newSelected = new Set(selectedAccIds);
+    if (newSelected.has(id)) {
+      newSelected.delete(id);
+    } else {
+      newSelected.add(id);
+    }
+    setSelectedAccIds(newSelected);
+  };
+
+  const toggleSelectAllAccs = () => {
+    if (selectedAccIds.size === accounts.length) {
+      setSelectedAccIds(new Set());
+    } else {
+      setSelectedAccIds(new Set(accounts.map(a => String(a.id))));
+    }
+  };
+
+  const handleBulkDeleteApps = async () => {
+    if (selectedAppIds.size === 0) return;
+    
+    if (!confirm(`Are you sure you want to delete ${selectedAppIds.size} application(s)? This action cannot be undone.`)) {
+      return;
+    }
+
+    setIsDeleting(true);
+    try {
+      const res = await fetch("/api/admin/volunteers/bulk-delete", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ ids: Array.from(selectedAppIds) }),
+      });
+
+      if (res.ok) {
+        toast({ title: "Success", description: `${selectedAppIds.size} application(s) deleted successfully` });
+        setSelectedAppIds(new Set());
+        queryClient.invalidateQueries({ queryKey: ["/api/admin/volunteers"] });
+      } else {
+        throw new Error("Failed to delete applications");
+      }
+    } catch (error) {
+      toast({ title: "Error", description: "Failed to delete applications", variant: "destructive" });
+    } finally {
+      setIsDeleting(false);
+    }
+  };
+
+  const handleBulkDeleteAccs = async () => {
+    if (selectedAccIds.size === 0) return;
+    
+    if (!confirm(`Are you sure you want to delete ${selectedAccIds.size} account(s)? This action cannot be undone.`)) {
+      return;
+    }
+
+    setIsDeleting(true);
+    try {
+      const res = await fetch("/api/admin/volunteer-accounts/bulk-delete", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ ids: Array.from(selectedAccIds) }),
+      });
+
+      if (res.ok) {
+        toast({ title: "Success", description: `${selectedAccIds.size} account(s) deleted successfully` });
+        setSelectedAccIds(new Set());
+        queryClient.invalidateQueries({ queryKey: ["/api/admin/volunteer-accounts"] });
+      } else {
+        throw new Error("Failed to delete accounts");
+      }
+    } catch (error) {
+      toast({ title: "Error", description: "Failed to delete accounts", variant: "destructive" });
+    } finally {
+      setIsDeleting(false);
+    }
+  };
+
   const getStatusBadge = (status: string) => {
     switch (status) {
       case "approved": return <Badge className="bg-green-500">Approved / स्वीकृत</Badge>;
@@ -172,8 +276,23 @@ export default function AdminVolunteers() {
 
           <TabsContent value="accounts" className="mt-4">
             <Card>
-              <CardHeader>
+              <CardHeader className="flex flex-row items-center justify-between gap-2">
                 <CardTitle>Registered Volunteers / पंजीकृत स्वयंसेवक</CardTitle>
+                <div className="flex gap-2 items-center">
+                  {accounts.length > 0 && (
+                    <Checkbox 
+                      checked={accounts.length > 0 && selectedAccIds.size === accounts.length}
+                      onCheckedChange={toggleSelectAllAccs}
+                      data-testid="checkbox-select-all-accounts"
+                    />
+                  )}
+                  {selectedAccIds.size > 0 && (
+                    <Button variant="destructive" size="sm" onClick={handleBulkDeleteAccs} disabled={isDeleting} data-testid="button-bulk-delete-accounts">
+                      {isDeleting ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Trash2 className="h-4 w-4 mr-2" />}
+                      Delete ({selectedAccIds.size})
+                    </Button>
+                  )}
+                </div>
               </CardHeader>
               <CardContent>
                 {loadingAccounts ? (
@@ -189,14 +308,21 @@ export default function AdminVolunteers() {
                     {accounts.map((account) => (
                       <div key={account.id} className="p-4 border rounded-md bg-muted/30" data-testid={`card-account-${account.id}`}>
                         <div className="flex items-start justify-between gap-4 flex-wrap">
-                          <div className="space-y-1">
-                            <div className="flex items-center gap-2 flex-wrap">
-                              <span className="font-semibold" data-testid={`text-account-name-${account.id}`}>{account.fullName}</span>
-                              {getAccountStatusBadge(account)}
+                          <div className="flex items-start gap-3">
+                            <Checkbox 
+                              checked={selectedAccIds.has(String(account.id))}
+                              onCheckedChange={() => toggleSelectAcc(String(account.id))}
+                              data-testid={`checkbox-account-${account.id}`}
+                            />
+                            <div className="space-y-1">
+                              <div className="flex items-center gap-2 flex-wrap">
+                                <span className="font-semibold" data-testid={`text-account-name-${account.id}`}>{account.fullName}</span>
+                                {getAccountStatusBadge(account)}
+                              </div>
+                              <p className="text-sm text-muted-foreground" data-testid={`text-account-email-${account.id}`}>{account.email}</p>
+                              {account.phone && <p className="text-sm text-muted-foreground">{account.phone}</p>}
+                              {account.city && <p className="text-sm text-muted-foreground">{account.city}</p>}
                             </div>
-                            <p className="text-sm text-muted-foreground" data-testid={`text-account-email-${account.id}`}>{account.email}</p>
-                            {account.phone && <p className="text-sm text-muted-foreground">{account.phone}</p>}
-                            {account.city && <p className="text-sm text-muted-foreground">{account.city}</p>}
                           </div>
                           <div className="flex items-center gap-2 flex-wrap">
                             <Button size="icon" variant="outline" onClick={() => { setSelectedAccount(account); setAccountDialogOpen(true); }} data-testid={`button-view-account-${account.id}`}>
@@ -225,8 +351,23 @@ export default function AdminVolunteers() {
 
           <TabsContent value="applications" className="mt-4">
             <Card>
-              <CardHeader>
+              <CardHeader className="flex flex-row items-center justify-between gap-2">
                 <CardTitle>Volunteer Applications / स्वयंसेवक आवेदन</CardTitle>
+                <div className="flex gap-2 items-center">
+                  {applications.length > 0 && (
+                    <Checkbox 
+                      checked={applications.length > 0 && selectedAppIds.size === applications.length}
+                      onCheckedChange={toggleSelectAllApps}
+                      data-testid="checkbox-select-all-applications"
+                    />
+                  )}
+                  {selectedAppIds.size > 0 && (
+                    <Button variant="destructive" size="sm" onClick={handleBulkDeleteApps} disabled={isDeleting} data-testid="button-bulk-delete-applications">
+                      {isDeleting ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Trash2 className="h-4 w-4 mr-2" />}
+                      Delete ({selectedAppIds.size})
+                    </Button>
+                  )}
+                </div>
               </CardHeader>
               <CardContent>
                 {loadingApplications ? (
@@ -242,14 +383,21 @@ export default function AdminVolunteers() {
                     {applications.map((volunteer) => (
                       <div key={volunteer.id} className="p-4 border rounded-md bg-muted/30" data-testid={`card-volunteer-${volunteer.id}`}>
                         <div className="flex items-start justify-between gap-4 flex-wrap">
-                          <div className="space-y-1">
-                            <div className="flex items-center gap-2 flex-wrap">
-                              <span className="font-semibold" data-testid={`text-name-${volunteer.id}`}>{volunteer.fullName}</span>
-                              {getStatusBadge(volunteer.status)}
+                          <div className="flex items-start gap-3">
+                            <Checkbox 
+                              checked={selectedAppIds.has(String(volunteer.id))}
+                              onCheckedChange={() => toggleSelectApp(String(volunteer.id))}
+                              data-testid={`checkbox-application-${volunteer.id}`}
+                            />
+                            <div className="space-y-1">
+                              <div className="flex items-center gap-2 flex-wrap">
+                                <span className="font-semibold" data-testid={`text-name-${volunteer.id}`}>{volunteer.fullName}</span>
+                                {getStatusBadge(volunteer.status)}
+                              </div>
+                              <p className="text-sm text-muted-foreground" data-testid={`text-email-${volunteer.id}`}>{volunteer.email}</p>
+                              <p className="text-sm text-muted-foreground" data-testid={`text-phone-${volunteer.id}`}>{volunteer.phone}</p>
+                              {volunteer.city && <p className="text-sm text-muted-foreground">{volunteer.city}</p>}
                             </div>
-                            <p className="text-sm text-muted-foreground" data-testid={`text-email-${volunteer.id}`}>{volunteer.email}</p>
-                            <p className="text-sm text-muted-foreground" data-testid={`text-phone-${volunteer.id}`}>{volunteer.phone}</p>
-                            {volunteer.city && <p className="text-sm text-muted-foreground">{volunteer.city}</p>}
                           </div>
                           <div className="flex items-center gap-2 flex-wrap">
                             <Button size="icon" variant="outline" onClick={() => { setSelectedApplication(volunteer); setAdminNotes(volunteer.adminNotes || ""); setViewDialogOpen(true); }} data-testid={`button-view-${volunteer.id}`}>

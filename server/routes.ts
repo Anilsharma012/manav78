@@ -265,6 +265,21 @@ export async function registerRoutes(app: Express): Promise<void> {
     }
   });
 
+  // Bulk delete students
+  app.post("/api/students/bulk-delete", authMiddleware, adminOnly, async (req: AuthRequest, res) => {
+    try {
+      const { ids } = req.body;
+      if (!ids || !Array.isArray(ids) || ids.length === 0) {
+        return res.status(400).json({ error: "No IDs provided" });
+      }
+      await storage.bulkDeleteStudents(ids);
+      res.json({ success: true, deleted: ids.length });
+    } catch (error) {
+      console.error("Bulk delete students error:", error);
+      res.status(500).json({ error: "Failed to delete students" });
+    }
+  });
+
   app.post("/api/students", authMiddleware, adminOnly, async (req: AuthRequest, res) => {
     try {
       const { email, password, fullName, phone, fatherName, motherName, address, city, pincode, dateOfBirth, gender, class: studentClass, feeLevel } = req.body;
@@ -432,6 +447,21 @@ export async function registerRoutes(app: Express): Promise<void> {
       res.json({ success: true });
     } catch (error) {
       res.status(500).json({ error: "Failed to delete admit card" });
+    }
+  });
+
+  // Bulk delete admit cards
+  app.post("/api/admit-cards/bulk-delete", authMiddleware, adminOnly, async (req: AuthRequest, res) => {
+    try {
+      const { ids } = req.body;
+      if (!ids || !Array.isArray(ids) || ids.length === 0) {
+        return res.status(400).json({ error: "No IDs provided" });
+      }
+      await storage.bulkDeleteAdmitCards(ids);
+      res.json({ success: true, deleted: ids.length });
+    } catch (error) {
+      console.error("Bulk delete admit cards error:", error);
+      res.status(500).json({ error: "Failed to delete admit cards" });
     }
   });
 
@@ -761,6 +791,28 @@ export async function registerRoutes(app: Express): Promise<void> {
       res.json(volunteer);
     } catch (error) {
       res.status(500).json({ error: "Failed to update volunteer" });
+    }
+  });
+
+  app.delete("/api/admin/volunteers/:id", authMiddleware, adminOnly, async (req: AuthRequest, res) => {
+    try {
+      await storage.deleteVolunteerApplication(req.params.id);
+      res.json({ success: true, message: "Volunteer application deleted" });
+    } catch (error) {
+      res.status(500).json({ error: "Failed to delete volunteer application" });
+    }
+  });
+
+  app.post("/api/admin/volunteers/bulk-delete", authMiddleware, adminOnly, async (req: AuthRequest, res) => {
+    try {
+      const { ids } = req.body;
+      if (!ids || !Array.isArray(ids) || ids.length === 0) {
+        return res.status(400).json({ error: "No IDs provided" });
+      }
+      await storage.bulkDeleteVolunteerApplications(ids);
+      res.json({ success: true, deleted: ids.length });
+    } catch (error) {
+      res.status(500).json({ error: "Failed to delete volunteer applications" });
     }
   });
 
@@ -1207,6 +1259,21 @@ export async function registerRoutes(app: Express): Promise<void> {
     }
   });
 
+  // Bulk delete volunteer accounts
+  app.post("/api/admin/volunteer-accounts/bulk-delete", authMiddleware, adminOnly, async (req: AuthRequest, res) => {
+    try {
+      const { ids } = req.body;
+      if (!ids || !Array.isArray(ids) || ids.length === 0) {
+        return res.status(400).json({ error: "No IDs provided" });
+      }
+      await storage.bulkDeleteVolunteerAccounts(ids);
+      res.json({ success: true, deleted: ids.length });
+    } catch (error) {
+      console.error("Bulk delete volunteer accounts error:", error);
+      res.status(500).json({ error: "Failed to delete volunteer accounts" });
+    }
+  });
+
   app.post("/api/public/payment-transaction", async (req, res) => {
     try {
       const { type, name, email, phone, amount, transactionId, paymentMethod, purpose, fatherName, address, city, state, pincode, membershipLevel, photoUrl } = req.body;
@@ -1291,6 +1358,21 @@ export async function registerRoutes(app: Express): Promise<void> {
       res.json(transactions);
     } catch (error) {
       res.status(500).json({ error: "Failed to fetch pending transactions" });
+    }
+  });
+
+  // Bulk delete payment transactions
+  app.post("/api/admin/payment-transactions/bulk-delete", authMiddleware, adminOnly, async (req: AuthRequest, res) => {
+    try {
+      const { ids } = req.body;
+      if (!ids || !Array.isArray(ids) || ids.length === 0) {
+        return res.status(400).json({ error: "No IDs provided" });
+      }
+      await storage.bulkDeletePaymentTransactions(ids);
+      res.json({ success: true, deleted: ids.length });
+    } catch (error) {
+      console.error("Bulk delete payment transactions error:", error);
+      res.status(500).json({ error: "Failed to delete transactions" });
     }
   });
 
@@ -2085,6 +2167,21 @@ export async function registerRoutes(app: Express): Promise<void> {
       });
     } catch (error) {
       res.status(500).json({ error: "Failed to fetch member details" });
+    }
+  });
+
+  // Bulk delete members
+  app.post("/api/admin/members/bulk-delete", authMiddleware, adminOnly, async (req: AuthRequest, res) => {
+    try {
+      const { ids } = req.body;
+      if (!ids || !Array.isArray(ids) || ids.length === 0) {
+        return res.status(400).json({ error: "No IDs provided" });
+      }
+      await Member.deleteMany({ _id: { $in: ids } });
+      res.json({ success: true, deleted: ids.length });
+    } catch (error) {
+      console.error("Bulk delete members error:", error);
+      res.status(500).json({ error: "Failed to delete members" });
     }
   });
 
