@@ -24,12 +24,25 @@ function toPlain<T>(doc: any): T {
   delete obj._id;
   delete obj.__v;
   
-  // Handle nested populated documents
+  // Handle nested populated documents and ObjectId references
   for (const key in obj) {
-    if (obj[key] && typeof obj[key] === 'object' && obj[key]._id) {
-      obj[key].id = obj[key]._id?.toString() || obj[key].id;
-      delete obj[key]._id;
-      delete obj[key].__v;
+    if (obj[key]) {
+      // Handle ObjectId references (unpopulated)
+      if (obj[key].constructor?.name === 'ObjectId' || (obj[key]._bsontype === 'ObjectId')) {
+        obj[key] = obj[key].toString();
+      }
+      // Handle nested populated documents
+      else if (typeof obj[key] === 'object' && obj[key]._id) {
+        obj[key].id = obj[key]._id?.toString() || obj[key].id;
+        delete obj[key]._id;
+        delete obj[key].__v;
+        // Also convert any ObjectId fields in nested objects
+        for (const nestedKey in obj[key]) {
+          if (obj[key][nestedKey] && (obj[key][nestedKey].constructor?.name === 'ObjectId' || obj[key][nestedKey]._bsontype === 'ObjectId')) {
+            obj[key][nestedKey] = obj[key][nestedKey].toString();
+          }
+        }
+      }
     }
   }
   

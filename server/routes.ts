@@ -421,23 +421,30 @@ export async function registerRoutes(app: Express): Promise<void> {
       const admitCard = await storage.createAdmitCard(req.body);
       console.log("[ADMIT CARD] Created successfully:", admitCard?.id);
       
-      // Send email notification to student (non-blocking)
+      // Send response immediately
+      res.status(201).json(admitCard);
+      
+      // Send email notification to student (truly non-blocking after response)
       if (req.body.studentId) {
-        const student = await storage.getStudentById(req.body.studentId);
-        if (student?.email) {
-          sendAdmitCardNotificationEmail({
-            email: student.email,
-            studentName: student.fullName,
-            examName: req.body.examName || "Examination",
-            rollNumber: student.rollNumber || undefined,
-          }).catch(err => console.error("Admit card notification email error:", err));
+        try {
+          const student = await storage.getStudentById(req.body.studentId);
+          if (student?.email) {
+            sendAdmitCardNotificationEmail({
+              email: student.email,
+              studentName: student.fullName,
+              examName: req.body.examName || "Examination",
+              rollNumber: student.rollNumber || undefined,
+            }).catch(err => console.error("Admit card notification email error:", err));
+          }
+        } catch (emailErr) {
+          console.error("Admit card email lookup error:", emailErr);
         }
       }
-      
-      res.status(201).json(admitCard);
     } catch (error: any) {
       console.error("[ADMIT CARD] Error creating admit card:", error?.message || error);
-      res.status(500).json({ error: "Failed to create admit card" });
+      if (!res.headersSent) {
+        res.status(500).json({ error: "Failed to create admit card" });
+      }
     }
   });
 
@@ -984,6 +991,16 @@ export async function registerRoutes(app: Express): Promise<void> {
     }
   });
 
+  // Privacy Policy API
+  app.get("/api/public/privacy-policy", async (req, res) => {
+    try {
+      const tac = await storage.getTermsAndConditionsByType("privacy");
+      res.json(tac || null);
+    } catch (error) {
+      res.status(500).json({ error: "Failed to fetch privacy policy" });
+    }
+  });
+
   // Terms & Conditions API
   app.get("/api/public/terms-and-conditions", async (req, res) => {
     try {
@@ -1347,7 +1364,8 @@ export async function registerRoutes(app: Express): Promise<void> {
     try {
       const transactions = await storage.getAllPaymentTransactions();
       res.json(transactions);
-    } catch (error) {
+    } catch (error: any) {
+      console.error("[TRANSACTIONS] Error fetching all transactions:", error?.message || error);
       res.status(500).json({ error: "Failed to fetch transactions" });
     }
   });
